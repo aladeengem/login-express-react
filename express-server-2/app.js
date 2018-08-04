@@ -11,8 +11,9 @@ var user_action = require('./routes/user_action_routes.js');
 var Users = require('./models/user_action');
 
 var passport = require('passport');
-var ExtractJwt = require('passport-jwt').ExtractJwt;
-var JwtStrategy = require('passport-jwt').Strategy;
+
+var strategy = require('./_helpers/passport-authentication');
+
 
 
 var app = express();
@@ -39,22 +40,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-var jwtOptions = {};
-jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-jwtOptions.secretOrKey = 'HowIronic';
-
-var strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
-    var query = Users.find({id: jwt_payload.id});
-
-    query.exec((err, matchUsers) => {
-        matchUsers.length == 0 ? next(null, false) : next(null, matchUsers)
-    })
-});
 
 passport.use(strategy);
+//console.log(strategy);
 
-app.use('/', passport.authenticate('jwt', {session : false }), (req, res) => {
-  res.json({message: "Success! You can not see this without a token"});
+app.use(passport.initialize());
+
+app.get('/profile', passport.authenticate('jwt', {session : false }), (req, res) => {
+  
+  const user = req.user;
+  user.map(user => {
+    res.json({ id: user._id, email: user.email, token: req.headers.authorization, message: "Success! You can not see this without a token"});
+  })
 });
 
 app.use('/user', users);

@@ -11,7 +11,7 @@ const mapDispatchToProps = dispatch => {
 
 const mapStateToProps = state => {
     return{
-        message: state.message
+        message: state.login
     }
 }
 
@@ -25,18 +25,13 @@ class LoginForm extends Component{
                 email: '',
                 password: ''
             },
-
+            
+            isAuthenticated: false,
             message: ''
         }
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
-    }
-
-    componentWillReceiveProps(nextProps){
-        if(this.props.message !== nextProps.message){
-            this.setState({message: nextProps.message});
-        }
     }
 
     handleSubmit(e){
@@ -59,10 +54,14 @@ class LoginForm extends Component{
         
     }
     
+    componentWillReceiveProps(nextProps){
+        this.setState({message: nextProps.message, isAuthenticated: nextProps.isAuthenticated})
+    }
     
     render(){
         const {user} = this.state;
-        console.log(this.state.message);
+        const {message} = this.state;
+        console.log(message);
         return(
         <div className="container-fluid">
             <div className="row">

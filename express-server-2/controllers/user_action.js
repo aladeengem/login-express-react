@@ -13,19 +13,19 @@ const user_registration_controller = (req, res) => {
             hashPassword(users.password)
                 .then((hashedPassword) => {
                     users.password = hashedPassword;
-
+                    console.log(users.password);
                     users.save(users)
                         .then(() => {
-                            res.status(201).redirect('/users');
+                            res.status(200).json({ok: true, message: "Successfully Registered!"});
                         })
                         .catch(err => {
-                            res.status(400).send("unable to save to database");
+                            res.status(400).json({message: "unable to save to database"});
                         })
                 })
         },
 
-            reject => {
-                res.status(400).send(reject);
+            error => {
+                res.status(400).json({message: error});
         }
     )   
 };
@@ -55,26 +55,29 @@ const login = (req, res) => {
         findEmail(users.email)
             .then(matchUsers => {
                 return findPassword(users.password, matchUsers)
-                    .then(matchUsers => {
-                       
+                    .then(matchUsers => { 
                         var payload = matchUsers.id;
                         var token = jwt.sign(payload, 'HowIronic');
-                        console.log(token);
-                        res.status(200).send({as : "Login!"})
-                    
-                    }, 
-                    error => {
-                        res.status(401).send(error)
+                        res.status(200).json({ok: true, message : "Login!" , token: token, 
+                                              user: {
+                                                  id: matchUsers.id,
+                                                  email: matchUsers.email}
+                                            });
+                                        }, 
+                         error => {
+                            res.status(401).json({message: error})
+                         })
+                    .catch(error => {
+                    res.status(401).json({message: errpr});
                     })
-
-                .catch(err => {
-                        console.log(err);
-                })
-            },
-                error=> {
-                    res.status(401).send(error)
-                }
-        )   
+                },
+                  error=> {
+                    res.status(401).json({message: error})
+                  }
+            ).catch(error => {
+            res.status(401).json({message: error});
+            
+        })   
 };
 
 const findEmail = email => {
@@ -82,7 +85,7 @@ const findEmail = email => {
         var query = Users.find({email: email});
 
         query.exec((err, matchUsers) => {
-            matchUsers.length == 0 ? reject() : resolve (matchUsers) 
+            matchUsers.length == 0 ? reject("No users found!") : resolve (matchUsers) 
         })
 
     })
@@ -93,10 +96,9 @@ const findPassword = (password, matchUsers) => {
         matchUsers.map(users => {
             bcrypt.compare(password, users.password, (err, res) => {
                 {
-                    res == false ? 
-                    reject("Password Don't Match! ") : resolve(users)
+                    res == false ? reject("Password don't match!") : resolve(users)
                 }
-                return reject("Password Don't Match! ");
+                return reject("Password don't match!");
             }
         )
         })
